@@ -209,8 +209,8 @@ public static class AdminAuth
     private static string LoginBody(string error)
     {
         var sb = new System.Text.StringBuilder();
-        sb.Append("<div class='loginwrap'><div class='logincard'>");
-        sb.Append("<div class='llogo'>Azure Cove Hotel</div><div class='lsub'>Admin console</div>");
+        sb.Append("<div class='loginwrap'><div class='logincard'><span class='lstar'>&#10022;</span>");
+        sb.Append("<div class='llogo'>Azure</div><div class='lsub'><i></i>Cove Hotel<i></i></div><div class='ladmin'>Admin console</div>");
         if (error != "") sb.Append("<div class='alert bad'>" + AdminData.H(error) + "</div>");
         sb.Append("<form method='post' action='/admin/login'>");
         sb.Append("<label class='f'>Username</label><input class='t' name='username' required autofocus>");

@@ -76,7 +76,7 @@ public static class AdminConsole
     {
         var sb = new StringBuilder();
         sb.Append("<div class='shell'><aside class='sidebar'>");
-        sb.Append("<div class='sbrand'><span class='slogo'>Azure Cove</span><span class='ssub'>Admin console</span></div>");
+        sb.Append("<div class='sbrand'><span class='sstar'>&#10022;</span><span class='slogo'>Azure</span><span class='ssub'><i></i>Cove Hotel<i></i></span><span class='sadmin'>Admin console</span></div>");
         string currentGroup = "\u0000";
         foreach (var item in Nav)
         {
@@ -115,8 +115,8 @@ public static class AdminConsole
     {
         return "<!DOCTYPE html><html><head><meta charset='utf-8'>"
             + "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-            + "<link rel='icon' type='image/png' href='/photo/logo.png'>"
-            + "<link rel='preconnect' href='https://fonts.googleapis.com'><link href='https://fonts.googleapis.com/css2?family=Fleur+De+Leah&family=Poppins:wght@400;600;700&display=swap' rel='stylesheet'>"
+            + "<link rel='icon' type='image/jpeg' href='/photo/azure-icon.jpeg'>"
+            + "<link rel='preconnect' href='https://fonts.googleapis.com'><link href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Poppins:wght@400;600;700&display=swap' rel='stylesheet'>"
             + "<title>" + AdminData.H(title) + " - Admin - Azure Cove Hotel</title><style>" + AdminCss + "</style></head><body" + (dark ? " class='dark'" : "") + ">" + inner + "</body></html>";
     }
 
@@ -171,23 +171,26 @@ a{color:var(--link);text-decoration:none}
 button,input,select,textarea{font-family:inherit}
 .shell{display:flex;min-height:100vh}
 .sidebar{width:242px;flex-shrink:0;background:#0b2e59;color:#cdd8ee;padding:18px 0 26px}
-.sbrand{padding:2px 18px 14px;border-bottom:1px solid #ffffff22;margin-bottom:10px}
-.slogo{display:block;font-family:'Fleur De Leah',cursive;font-size:34px;color:#fff;line-height:1.1}
-.ssub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8fa9d4}
+.sbrand{padding:2px 18px 14px;border-bottom:1px solid #ffffff22;margin-bottom:10px;text-align:center;position:relative}
+.sstar{position:absolute;top:2px;right:20px;color:#d4af37;font-size:14px}
+.slogo{display:block;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:31px;letter-spacing:6px;text-transform:uppercase;color:#fff;line-height:1.1}
+.ssub{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#e3c46c;margin-top:3px}
+.ssub i{flex:1;height:1px;background:#c9a22766}
+.sadmin{display:block;font-size:9px;letter-spacing:2.4px;text-transform:uppercase;color:#8fa9d4;margin-top:7px}
 .sgroup{padding:14px 18px 4px;font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:#7f9ac7}
 .sitem{display:block;padding:9px 18px;color:#cdd8ee;font-size:13.5px;border-left:3px solid transparent}
 .sitem:hover{background:#ffffff10;color:#fff}
 .sitem.active{background:#ffffff14;color:#fff;border-left-color:#febb02;font-weight:600}
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
 .topbar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.topbar h1{margin:0;font-size:20px;color:var(--text)}
+.topbar h1{margin:0;font-size:22px;color:var(--text);font-family:'Cormorant Garamond',serif;font-weight:600}
 .user{display:flex;align-items:center;gap:10px}
 .uchip{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:5px 12px;font-size:13px}
 .content{padding:22px;max-width:1200px}
 .acard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow)}
 .acard.slim{max-width:520px}
-.acard h2{margin:0 0 10px;font-size:17px}
-.acard h3{margin:16px 0 8px;font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2)}
+.acard h2{margin:0 0 10px;font-size:20px;font-family:'Cormorant Garamond',serif;font-weight:600}
+.acard h3{margin:16px 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);font-family:'Cormorant Garamond',serif;font-weight:700}
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:18px}
 .stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
 .stat .lbl{font-size:12px;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px}
@@ -244,16 +247,19 @@ textarea.t{resize:vertical}
 .lg-blackout{background:#5c677d;background-image:repeating-linear-gradient(45deg,transparent 0 4px,#ffffffaa 4px 8px)}
 .lg-past{background:#868e96}
 .bare{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b2e59;padding:20px}
-.logincard{background:#fff;border-radius:12px;padding:34px 30px;width:380px;max-width:100%}
-.llogo{font-family:'Fleur De Leah',cursive;font-size:42px;color:#003b95;line-height:1.1}
-.lsub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#5a6b85;margin-bottom:14px}
+.logincard{background:#fff;border-radius:12px;padding:34px 30px;width:380px;max-width:100%;position:relative}
+.llogo{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:46px;letter-spacing:10px;text-transform:uppercase;color:#16305e;line-height:1.05;text-align:center}
+.lstar{position:absolute;top:20px;right:24px;color:#c9a227;font-size:14px}
+.lsub{display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#9a7b1e;margin:4px 0 0}
+.lsub i{flex:1;height:1px;background:#c9a227}
+.ladmin{font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:#5a6b85;text-align:center;margin-bottom:14px}
 /* paper (receipts, invoices, e-mail preview) stays white in dark mode */
 .paper{max-width:820px;margin:auto;background:#fff;color:#1a2233;border:1px solid #dfe5ee;padding:36px 40px;border-radius:8px}
 .paper .muted{color:#6b6b6b}
 .paper .atable th{color:#5a6b85;border-bottom-color:#e8edf4}
 .paper .atable td{color:#1a2233;border-bottom:1px solid #eef1f6}
 .phead{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid #003b95;padding-bottom:14px;margin-bottom:14px}
-.phead .pl{font-family:'Fleur De Leah',cursive;font-size:40px;color:#003b95;line-height:1}
+.phead .pl{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:34px;letter-spacing:4px;text-transform:uppercase;color:#16305e;line-height:1.05}
 .stamp{display:inline-block;border:3px solid #0b7a2a;color:#0b7a2a;border-radius:6px;padding:6px 16px;font-weight:800;letter-spacing:2px;transform:rotate(-5deg);font-size:18px}
 .stamp.due{border-color:#946200;color:#946200}
 .stamp.refund{border-color:#b02a2a;color:#b02a2a}

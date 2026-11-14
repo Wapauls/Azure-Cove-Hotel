@@ -57,11 +57,25 @@ button,input,select,textarea{font-family:inherit}
 .search input{border:0;font-size:16px;outline:0;margin-top:4px;width:100%;text-align:center}
 .btn,.search button{background:#0071c2;color:#fff;border:0;border-radius:4px;padding:12px 22px;font-size:16px;font-weight:600;cursor:pointer;display:inline-block}
 .btn.red{background:#c0392b}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px;margin-bottom:40px}
-.card{background:#fff;border:1px solid #ddd;border-radius:8px;overflow:hidden}
-.pic{width:100%;height:160px;object-fit:cover;display:block}
-.info{padding:14px}
-.info h3{margin:0 0 4px}
+.carousel{position:relative;max-width:1060px;margin:0 auto 14px}
+.cview{overflow:hidden;border-radius:12px}
+.ctrack{display:flex;transition:transform .45s ease}
+.rslide{min-width:100%}
+.card{display:flex;background:#fff;border:1px solid #ddd;border-radius:12px;overflow:hidden}
+.picwrap{width:46%;flex:none;background:#dbe7f5}
+.pic{width:100%;height:100%;min-height:360px;object-fit:cover;display:block}
+.info{flex:1;min-width:0;padding:26px 30px;display:flex;flex-direction:column;justify-content:center}
+.info h3{margin:0 0 8px;font-size:26px}
+.info .desc{margin-bottom:10px}
+.rfoot{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+.rfoot .tag{margin-bottom:0}
+.cnav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:44px;height:44px;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 8px rgba(0,30,80,.25);font-size:17px;cursor:pointer;color:#003b95}
+.cnav:hover{background:#eef5ff}
+.cnav.prev{left:14px}.cnav.next{right:14px}
+.cdots{display:flex;justify-content:center;gap:8px;margin:0 0 40px}
+.cdots .dot{width:9px;height:9px;border-radius:999px;border:0;background:#c5d3e6;cursor:pointer;padding:0;transition:all .25s}
+.cdots .dot.on{width:26px;background:#003b95}
+@media(max-width:760px){.card{flex-direction:column}.picwrap{width:100%}.pic{min-height:200px;height:220px}.info{padding:20px}}
 .muted{color:#6b6b6b;font-size:14px}
 .price{font-size:22px;font-weight:700;margin:10px 0 2px}
 .tag{display:inline-block;background:#008009;color:#fff;border-radius:4px;padding:2px 8px;font-size:12px;margin-bottom:6px}
@@ -313,40 +327,52 @@ app.MapGet("/", (int? nights, int? guests) =>
     sb.Append("<label>Guests<input type='number' name='guests' min='1' max='6' value='" + g + "'></label>");
     sb.Append("<button>Search</button></form></div></div>");
 
-    sb.Append("<div class='wrap'><h2>Rooms for " + g + " guest(s), " + n + " night(s)</h2><div class='grid'>");
+    sb.Append("<div class='wrap'><h2>Rooms for " + g + " guest(s), " + n + " night(s)</h2>");
 
     int shown = 0;
+    var slides = new StringBuilder();
     foreach (Room room in rooms)
     {
         if (room.MaxGuests < g) continue;
         shown++;
 
-        sb.Append("<div class='card'><img class='pic' src='" + room.Image + "' alt='" + room.Name + "'><div class='info'>");
-        sb.Append("<h3>" + room.Name + "</h3><div class='muted'>" + room.Details + "</div>");
-        sb.Append("<div class='muted'>Sleeps up to " + room.MaxGuests + "</div>");
-        sb.Append("<div class='price'>" + Money(AdminData.Quote(room, DateTime.Today, n, null).Total) + "</div>");
-        sb.Append("<div class='muted'>for " + n + " night(s), " + H(AdminData.Settings.TaxName) + " included</div><br>");
+        // wide card: picture on the left, name + description on the right
+        slides.Append("<div class='rslide'><div class='card'>");
+        slides.Append("<div class='picwrap'><img class='pic' src='/photo/" + H(room.Image) + "' alt='" + H(room.Name) + "' onerror=\"this.onerror=null;this.src='/photo/azure-logo.jpeg'\"></div>");
+        slides.Append("<div class='info'><h3>" + H(room.Name) + "</h3>");
+        slides.Append("<div class='muted desc'>" + H(room.Details) + "</div>");
+        slides.Append("<div class='muted'>Sleeps up to " + room.MaxGuests + "</div>");
+        slides.Append("<div class='price'>" + Money(AdminData.Quote(room, DateTime.Today, n, null).Total) + "</div>");
+        slides.Append("<div class='muted'>for " + n + " night(s), " + H(AdminData.Settings.TaxName) + " included</div>");
+        slides.Append("<div class='rfoot'>");
 
         string label = AdminData.AvailabilityLabel(room, DateTime.Today, n);
         if (label == "Available")
-        {
-            sb.Append("<span class='tag'>Available</span><br>");
-            sb.Append("<a class='btn' href='/book/" + room.Id + "?nights=" + n + "'>Reserve</a>");
-        }
+            slides.Append("<span class='tag'>Available</span><a class='btn' href='/book/" + room.Id + "?nights=" + n + "'>Reserve</a>");
         else
-        {
-            sb.Append("<span class='tag gray'>" + H(label) + "</span>");
-        }
+            slides.Append("<span class='tag gray'>" + H(label) + "</span>");
 
-        sb.Append("</div></div>");
+        slides.Append("</div></div></div></div>");
     }
 
     if (shown == 0)
     {
-        sb.Append("<p>No rooms fit that many guests. Try fewer guests.</p>");
+        sb.Append("<p>No rooms fit that many guests. Try fewer guests.</p></div>");
     }
-
-    sb.Append("</div></div>");
+    else
+    {
+        sb.Append("<div class='carousel'><button class='cnav prev' type='button' aria-label='Previous room'>&#10094;</button>");
+        sb.Append("<div class='cview'><div class='ctrack'>" + slides + "</div></div>");
+        sb.Append("<button class='cnav next' type='button' aria-label='Next room'>&#10095;</button></div>");
+        sb.Append("<div class='cdots'>");
+        for (int i = 0; i < shown; i++) sb.Append("<button class='dot' type='button' aria-label='Go to room " + (i + 1) + "'></button>");
+        sb.Append("</div>");
+        // auto-advances every 10 seconds and loops; pauses while the mouse is
+        // over the carousel, and every manual action (arrows, dots, keyboard,
+        // swipe) restarts the 10 s countdown
+        sb.Append("<script>(function(){var t=document.querySelector('.ctrack');if(!t)return;var s=t.children.length;var prev=document.querySelector('.cnav.prev'),next=document.querySelector('.cnav.next'),box=document.querySelector('.carousel');var dots=[].slice.call(document.querySelectorAll('.cdots .dot'));if(s<2){if(prev)prev.style.display='none';if(next)next.style.display='none';var dc=document.querySelector('.cdots');if(dc)dc.style.display='none';return;}var i=0,timer=null;function go(k){i=(k%s+s)%s;t.style.transform='translateX(-'+(i*100)+'%)';dots.forEach(function(d,j){d.className='dot'+(j===i?' on':'');});}function start(){if(!timer)timer=setInterval(function(){go(i+1);},10000);}function stop(){if(timer){clearInterval(timer);timer=null;}}function bump(){stop();start();}if(prev)prev.addEventListener('click',function(){go(i-1);bump();});if(next)next.addEventListener('click',function(){go(i+1);bump();});dots.forEach(function(d,j){d.addEventListener('click',function(){go(j);bump();});});document.addEventListener('keydown',function(e){if(e.key==='ArrowLeft'){go(i-1);bump();}else if(e.key==='ArrowRight'){go(i+1);bump();}});var x0=null;t.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;stop();},{passive:true});t.addEventListener('touchend',function(e){if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>40)go(dx<0?i+1:i-1);start();},{passive:true});if(box){box.addEventListener('mouseenter',stop);box.addEventListener('mouseleave',start);}go(0);start();})();</script>");
+        sb.Append("</div>");
+    }
     return Page("Find your next stay", sb.ToString());
 });
 
