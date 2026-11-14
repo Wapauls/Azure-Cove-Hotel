@@ -39,6 +39,14 @@ public static class AdminAuth
 
     public static bool Can(string role, string section) => CanSee.TryGetValue(section, out var roles) && roles.Contains(role);
 
+    // Drops every session of a user except keepToken - used after a password
+    // change so other browsers/devices have to sign in again.
+    public static void RevokeOtherSessions(string username, string keepToken)
+    {
+        List<string> dead = Sessions.Where(kv => kv.Value.Username == username && kv.Key != keepToken).Select(kv => kv.Key).ToList();
+        foreach (string t in dead) Sessions.Remove(t);
+    }
+
     // ---------- passwords ----------
 
     public static string HashPassword(string password)
@@ -91,6 +99,23 @@ public static class AdminAuth
 
     public static void Map(WebApplication app)
     {
+        // Admin pages are never cached: after signing out, the back button
+        // (and the disk cache) must show the sign-in page again instead of a
+        // remembered console page with live data.
+        app.Use(async (HttpContext ctx, Func<Task> next) =>
+        {
+            if (ctx.Request.Path.StartsWithSegments("/admin"))
+            {
+                ctx.Response.OnStarting(() =>
+                {
+                    ctx.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
+                    ctx.Response.Headers["Pragma"] = "no-cache";
+                    return Task.CompletedTask;
+                });
+            }
+            await next();
+        });
+
         app.MapGet("/admin/login", (HttpContext ctx) =>
         {
             if (UserOf(ctx) != null) return Results.Redirect("/admin/dashboard");
@@ -127,7 +152,7 @@ public static class AdminAuth
 
             string token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
             Sessions[token] = new AdminSession { Token = token, Username = u.Username, Role = u.Role, Expires = DateTime.Now.AddHours(8) };
-            ctx.Response.Cookies.Append(CookieName, token, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Lax, Path = "/" });
+            ctx.Response.Cookies.Append(CookieName, token, new CookieOptions { HttpOnly = true, Secure = ctx.Request.IsHttps, SameSite = SameSiteMode.Lax, Path = "/", IsEssential = true });
 
             AdminData.Save();
             AdminData.Audit(ctx, "Login", "signed in");
@@ -139,7 +164,12 @@ public static class AdminAuth
             AdminData.Audit(ctx, "Logout", "signed out");
             string? token = ctx.Request.Cookies[CookieName];
             if (token != null) Sessions.Remove(token);
-            ctx.Response.Cookies.Delete(CookieName);
+            // delete with the same Path the cookie was set with, otherwise the
+            // browser keeps the original cookie around
+            ctx.Response.Cookies.Delete(CookieName, new CookieOptions { Path = "/" });
+            // drop everything cached for this site, so no console page survives
+            // the back button once the user has signed out
+            ctx.Response.Headers["Clear-Site-Data"] = "\"cache\"";
             return Results.Redirect("/admin/login");
         });
 
@@ -168,6 +198,8 @@ public static class AdminAuth
 
             u.PasswordHash = HashPassword(new1);
             u.MustChangePassword = false;
+            // sign out any other device/browser that is logged in as this user
+            RevokeOtherSessions(u.Username, ctx.Request.Cookies[CookieName] ?? "");
             AdminData.Save();
             AdminData.Audit(ctx, "Password changed", "password changed for '" + u.Username + "'");
             return Results.Redirect("/admin/dashboard");
@@ -184,7 +216,6 @@ public static class AdminAuth
         sb.Append("<label class='f'>Username</label><input class='t' name='username' required autofocus>");
         sb.Append("<label class='f'>Password</label><input class='t' type='password' name='password' required><br>");
         sb.Append("<button class='btn' style='width:100%'>Sign in</button></form>");
-        sb.Append("<p class='muted'>First time? Sign in with <b>admin</b> / <b>admin123</b> and change the password.</p>");
         sb.Append("</div></div>");
         return sb.ToString();
     }

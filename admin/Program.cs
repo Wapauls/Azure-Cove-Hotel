@@ -91,7 +91,7 @@ IResult Page(string title, string body)
         + "<div class='top'><div class='bar'><a class='logo' href='/'>Azure Cove Hotel</a>"
         + "<div class='nav'><a href='/'>Stays</a><a href='/mybookings'>My bookings</a><a href='/support'>Customer support</a></div></div></div>"
         + body
-        + "<div class='foot'>Azure Cove Hotel - all prices include " + H(AdminData.Settings.TaxName) + " &middot; <a href='/admin'>Staff login</a></div></body></html>";
+        + "<div class='foot'>Azure Cove Hotel - all prices include " + H(AdminData.Settings.TaxName) + "</div></body></html>";
 
     return Results.Content(html, "text/html; charset=utf-8");
 }
