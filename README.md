@@ -22,7 +22,7 @@ Open the site at the URL shown in the console (e.g. `http://localhost:5000`) and
 
 ## Admin console
 
-- **Login:** first account is `admin` / `admin123` - you will be asked to change it at first sign-in.
+- **Login:** first account is `admin` / `admin123`. There is no forced password change on sign-in — every staff member (Admin, Manager, Front Desk, Housekeeping) manages their own account through **My account** in the top bar: change username or password with a review-and-confirm step; new passwords sign out other devices. New staff created in Staff Management see a reminder banner until they change the default password.
 - **Dark mode:** the **Dark mode / Light mode** button in the top bar switches the console theme; the preference is saved per account and survives restarts. Receipts and invoices stay white (paper look) in dark mode.
 - **Roles:** Admin (everything), Manager (everything except Accounts Database), Front Desk (reservations, payments, billing, rooms, calendar, housekeeping, guests), Housekeeping (dashboard + housekeeping only).
 - **Sidebar:** Dashboard, Reservations, Rooms & Inventory, Availability Calendar, Guests/Users, Payments, Billing/Invoicing, Staff Management, Housekeeping, Offers/Promotions, Rate Management, Reports, Email Templates, System Settings, Accounts Database, Audit Logs.

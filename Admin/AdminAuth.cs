@@ -19,6 +19,7 @@ public static class AdminAuth
     // Which roles may see which sidebar section.
     public static readonly Dictionary<string, string[]> CanSee = new()
     {
+        ["account"] = new[] { "Admin", "Manager", "Front Desk", "Housekeeping" },
         ["dashboard"] = new[] { "Admin", "Manager", "Front Desk", "Housekeeping" },
         ["reservations"] = new[] { "Admin", "Manager", "Front Desk" },
         ["payments"] = new[] { "Admin", "Manager", "Front Desk" },
@@ -45,6 +46,33 @@ public static class AdminAuth
     {
         List<string> dead = Sessions.Where(kv => kv.Value.Username == username && kv.Key != keepToken).Select(kv => kv.Key).ToList();
         foreach (string t in dead) Sessions.Remove(t);
+    }
+
+    // A reviewed-but-not-yet-confirmed account change (username, or the HASH
+    // of a new password). Keyed by session token and kept for 10 minutes, so
+    // no secret travels through the confirmation page.
+    private sealed class Pending
+    {
+        public string Kind = "";
+        public string Value = "";
+        public DateTime Expires;
+    }
+
+    private static readonly Dictionary<string, Pending> PendingMap = new();
+
+    private static void Pend(HttpContext ctx, string kind, string value)
+    {
+        PendingMap[ctx.Request.Cookies[CookieName] ?? ""] = new Pending { Kind = kind, Value = value, Expires = DateTime.Now.AddMinutes(10) };
+    }
+
+    private static Pending? TakePending(HttpContext ctx)
+    {
+        string token = ctx.Request.Cookies[CookieName] ?? "";
+        List<string> expired = PendingMap.Where(kv => kv.Value.Expires < DateTime.Now).Select(kv => kv.Key).ToList();
+        foreach (string k in expired) PendingMap.Remove(k);
+        if (token == "" || !PendingMap.TryGetValue(token, out Pending? p)) return null;
+        PendingMap.Remove(token);
+        return p.Expires < DateTime.Now ? null : p;
     }
 
     // ---------- passwords ----------
@@ -156,7 +184,9 @@ public static class AdminAuth
 
             AdminData.Save();
             AdminData.Audit(ctx, "Login", "signed in");
-            return Results.Redirect(u.MustChangePassword ? "/admin/password" : "/admin/dashboard");
+            // no forced password redirect - staff manage their own account
+            // under "My account" in the top bar
+            return Results.Redirect("/admin/dashboard");
         });
 
         app.MapPost("/admin/logout", (HttpContext ctx) =>
@@ -173,36 +203,107 @@ public static class AdminAuth
             return Results.Redirect("/admin/login");
         });
 
-        app.MapGet("/admin/password", (HttpContext ctx) =>
+        // ---------- my account (available to every signed-in staff member) ----------
+
+        app.MapGet("/admin/account", (HttpContext ctx) =>
         {
-            AdminUser? u = UserOf(ctx);
-            if (u == null) return Results.Redirect("/admin/login");
-            return AdminConsole.Page(u, "dashboard", "Change password", ChangePasswordBody(""));
+            var (u, deny) = Check(ctx, "account");
+            if (u == null) return deny ?? Results.Redirect("/admin/login");
+            string saved = ctx.Request.Query["saved"].ToString();
+            return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, saved, ""));
         });
 
-        app.MapPost("/admin/password", async (HttpContext ctx) =>
+        // Username change: authorize with the current password, validate, park
+        // the request and show the confirmation prompt - nothing is saved until
+        // the staff member confirms on the next page.
+        app.MapPost("/admin/account/username", async (HttpContext ctx) =>
         {
-            AdminUser? u = UserOf(ctx);
-            if (u == null) return Results.Redirect("/admin/login");
             var form = await ctx.Request.ReadFormAsync();
+            var (u, deny) = Check(ctx, "account");
+            if (u == null) return deny ?? Results.Redirect("/admin/login");
+
+            if (!VerifyPassword(form["current"].ToString(), u.PasswordHash))
+                return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, "", "Your current password is wrong."));
+
+            string newName = form["username"].ToString().Trim();
+            if (newName.Length < 3 || newName.Length > 30 || newName.Contains(' '))
+                return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, "", "The new username must be 3-30 characters with no spaces."));
+            if (newName == u.Username)
+                return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, "", "That is already your username."));
+            if (AdminData.Admins.Find(a => a.Username.Equals(newName, StringComparison.OrdinalIgnoreCase)) != null)
+                return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, "", "That username is already taken."));
+
+            Pend(ctx, "username", newName);
+            return AdminConsole.Page(u, "account", "Review username change", ConfirmUsernameBody(u.Username, newName));
+        });
+
+        app.MapPost("/admin/account/username/confirm", (HttpContext ctx) =>
+        {
+            var (u, deny) = Check(ctx, "account");
+            if (u == null) return deny ?? Results.Redirect("/admin/login");
+
+            Pending? p = TakePending(ctx);
+            if (p == null || p.Kind != "username")
+                return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, "", "The change request expired. Please start again."));
+
+            string oldName = u.Username;
+            string newName = p.Value;
+            if (AdminData.Admins.Find(a => a.Id != u.Id && a.Username.Equals(newName, StringComparison.OrdinalIgnoreCase)) != null)
+                return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, "", "That username was taken in the meantime. Please choose another."));
+
+            u.Username = newName;
+            // keep every signed-in session of the account working under the new name
+            foreach (var kv in Sessions.Where(kv => kv.Value.Username == oldName).ToList())
+                kv.Value.Username = newName;
+
+            AdminData.Save();
+            AdminData.Audit(ctx, "Username changed", "'" + oldName + "' is now '" + newName + "'");
+            return Results.Redirect("/admin/account?saved=username");
+        });
+
+        // Password change: same review-then-confirm pattern. Only the HASH of
+        // the new password is parked, so no secret ever travels through the
+        // confirmation page.
+        app.MapPost("/admin/account/password", async (HttpContext ctx) =>
+        {
+            var form = await ctx.Request.ReadFormAsync();
+            var (u, deny) = Check(ctx, "account");
+            if (u == null) return deny ?? Results.Redirect("/admin/login");
+
             string current = form["current"].ToString();
             string new1 = form["new1"].ToString();
             string new2 = form["new2"].ToString();
 
             if (!VerifyPassword(current, u.PasswordHash))
-                return AdminConsole.Page(u, "dashboard", "Change password", ChangePasswordBody("Your current password is wrong."));
+                return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, "", "Your current password is wrong."));
             if (new1.Length < 8)
-                return AdminConsole.Page(u, "dashboard", "Change password", ChangePasswordBody("The new password must be at least 8 characters."));
+                return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, "", "The new password must be at least 8 characters."));
             if (new1 != new2)
-                return AdminConsole.Page(u, "dashboard", "Change password", ChangePasswordBody("The two new passwords do not match."));
+                return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, "", "The two new passwords do not match."));
+            if (VerifyPassword(new1, u.PasswordHash))
+                return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, "", "The new password is the same as the current one."));
 
-            u.PasswordHash = HashPassword(new1);
+            Pend(ctx, "password", HashPassword(new1));
+            return AdminConsole.Page(u, "account", "Review password change", ConfirmPasswordBody(u.Username, new1.Length));
+        });
+
+        app.MapPost("/admin/account/password/confirm", (HttpContext ctx) =>
+        {
+            var (u, deny) = Check(ctx, "account");
+            if (u == null) return deny ?? Results.Redirect("/admin/login");
+
+            Pending? p = TakePending(ctx);
+            if (p == null || p.Kind != "password")
+                return AdminConsole.Page(u, "account", "Account settings", AccountBody(u, "", "The change request expired. Please start again."));
+
+            u.PasswordHash = p.Value;
             u.MustChangePassword = false;
             // sign out any other device/browser that is logged in as this user
             RevokeOtherSessions(u.Username, ctx.Request.Cookies[CookieName] ?? "");
+
             AdminData.Save();
-            AdminData.Audit(ctx, "Password changed", "password changed for '" + u.Username + "'");
-            return Results.Redirect("/admin/dashboard");
+            AdminData.Audit(ctx, "Password changed", "password changed for '" + u.Username + "' (own account)");
+            return Results.Redirect("/admin/account?saved=password");
         });
     }
 
@@ -220,16 +321,68 @@ public static class AdminAuth
         return sb.ToString();
     }
 
-    private static string ChangePasswordBody(string error)
+    // ---------- my account page ----------
+
+    private static string AccountBody(AdminUser u, string saved, string error)
     {
         var sb = new System.Text.StringBuilder();
-        sb.Append("<div class='acard slim'><h2>Change your password</h2>");
         if (error != "") sb.Append("<div class='alert bad'>" + AdminData.H(error) + "</div>");
-        sb.Append("<form method='post' action='/admin/password'>");
+        if (saved == "username") sb.Append("<div class='alert ok'>Username changed successfully.</div>");
+        if (saved == "password") sb.Append("<div class='alert ok'>Password changed successfully. Other signed-in devices were logged out.</div>");
+        if (u.MustChangePassword) sb.Append("<div class='alert warn'>You are still using the default password that was created for this account. Please change it below.</div>");
+
+        sb.Append("<div class='acard slim'><h2>Your account</h2>");
+        sb.Append("<div class='acct'><span>Username</span><b>" + AdminData.H(u.Username) + "</b></div>");
+        sb.Append("<div class='acct'><span>Role</span><b>" + AdminData.H(u.Role) + "</b></div>");
+        sb.Append("<div class='acct'><span>Last sign-in</span><b>" + (u.LastLoginAt == null ? "-" : AdminData.H(u.LastLoginAt.Value.ToString("MMM d, yyyy, h:mm tt"))) + "</b></div>");
+        sb.Append("<div class='acct'><span>Sign-in IP</span><b>" + (u.LastLoginIp == "" ? "-" : AdminData.H(u.LastLoginIp)) + "</b></div>");
+        sb.Append("</div>");
+
+        sb.Append("<div class='acard slim'><h2>Change username</h2>");
+        sb.Append("<form method='post' action='/admin/account/username'>");
+        sb.Append("<label class='f'>Current password (authorizes this change)</label><input class='t' type='password' name='current' required>");
+        sb.Append("<label class='f'>New username (3-30 characters, no spaces)</label><input class='t' name='username' required><br>");
+        sb.Append("<button class='btn'>Review username change</button></form></div>");
+
+        sb.Append("<div class='acard slim'><h2>Change password</h2>");
+        sb.Append("<form method='post' action='/admin/account/password'>");
         sb.Append("<label class='f'>Current password</label><input class='t' type='password' name='current' required>");
         sb.Append("<label class='f'>New password (8+ characters)</label><input class='t' type='password' name='new1' required>");
         sb.Append("<label class='f'>Repeat new password</label><input class='t' type='password' name='new2' required><br>");
-        sb.Append("<button class='btn'>Save new password</button></form></div>");
+        sb.Append("<button class='btn'>Review password change</button></form></div>");
+        return sb.ToString();
+    }
+
+    // ---------- review-before-confirm pages ----------
+
+    private static string ConfirmUsernameBody(string oldName, string newName)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<div class='acard slim'><h2>Review username change</h2>");
+        sb.Append("<p class='muted'>Please review the details below before saving. The change takes effect immediately.</p>");
+        sb.Append("<div class='acct'><span>Current username</span><b>" + AdminData.H(oldName) + "</b></div>");
+        sb.Append("<div class='acct'><span>New username</span><b>" + AdminData.H(newName) + "</b></div>");
+        sb.Append("<p class='muted'>Your sign-in sessions keep working under the new username.</p><br>");
+        sb.Append("<form method='post' action='/admin/account/username/confirm' style='display:inline'>");
+        sb.Append("<button class='btn'>Confirm change</button></form> ");
+        sb.Append("<a class='btn gray' href='/admin/account'>Cancel</a></div>");
+        return sb.ToString();
+    }
+
+    private static string ConfirmPasswordBody(string username, int length)
+    {
+        // only the length travels to this page - the password itself stays
+        // server-side (as a hash) until confirmed
+        string masked = new string('\u2022', Math.Min(length, 20));
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<div class='acard slim'><h2>Review password change</h2>");
+        sb.Append("<p class='muted'>Please review the details below before saving. The change takes effect immediately.</p>");
+        sb.Append("<div class='acct'><span>Account</span><b>" + AdminData.H(username) + "</b></div>");
+        sb.Append("<div class='acct'><span>New password</span><b>" + masked + " (" + length + " characters)</b></div>");
+        sb.Append("<p class='muted'>After saving, any other device signed in to this account is logged out and must sign in again.</p><br>");
+        sb.Append("<form method='post' action='/admin/account/password/confirm' style='display:inline'>");
+        sb.Append("<button class='btn'>Confirm change</button></form> ");
+        sb.Append("<a class='btn gray' href='/admin/account'>Cancel</a></div>");
         return sb.ToString();
     }
 }

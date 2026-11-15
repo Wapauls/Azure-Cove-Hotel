@@ -91,6 +91,7 @@ public static class AdminConsole
         sb.Append("</aside><main class='main'><header class='topbar'>");
         sb.Append("<h1>" + AdminData.H(title) + "</h1>");
         sb.Append("<div class='user'><span class='uchip'>" + AdminData.H(user.Username) + " &middot; " + AdminData.H(user.Role) + "</span>");
+        sb.Append("<a class='btn small gray' href='/admin/account'>My account</a>");
         sb.Append("<form method='post' action='/admin/theme'><button class='btn small gray' title='Toggle dark mode'>" + (user.Theme == "dark" ? "&#9788; Light mode" : "&#127769; Dark mode") + "</button></form>");
         sb.Append("<form method='post' action='/admin/logout'><button class='btn small gray'>Log out</button></form></div></header>");
         sb.Append("<div class='content'>" + body + "</div></main></div>");
@@ -220,6 +221,10 @@ textarea.t{resize:vertical}
 .alert{border-radius:6px;padding:12px 14px;margin:10px 0;font-size:14px}
 .alert.ok{background:var(--okbg);border:1px solid var(--okfg);color:var(--okfg)}
 .alert.bad{background:var(--badbg);border:1px solid var(--badfg);color:var(--badfg)}
+.alert.warn{background:var(--warnbg);border:1px solid var(--warnfg);color:var(--warnfg)}
+.acct{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.acct:last-child{border-bottom:0}
+.acct span{color:var(--muted2)}
 .cols{display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:start}
 .cols3{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 .muted{color:var(--muted);font-size:13px}
