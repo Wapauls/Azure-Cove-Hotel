@@ -1,26 +1,24 @@
 # Azure-Cove-Hotel
 
-Hotel reservation website for **Azure Cove Hotel** (guest site) plus a separate **admin console**.
+Hotel reservation website for **Azure Cove Hotel** (guest site) plus a separate **admin console** —
+one single-file app, one live data set.
 
-## Run the guest site (original)
-
-```bash
-dotnet run Program.cs
-```
-
-Requires the .NET 10 SDK. The original `Program.cs` is kept exactly as it was.
-
-## Run the site + admin console (the copy)
+## Run
 
 ```bash
-dotnet run --file admin/Program.cs
+dotnet run --file Program.cs
 ```
 
-(or `dotnet run admin/Program.cs`). Needs .NET SDK **10.0.300+** (uses the `#:include` directive) or .NET 11.
+(or `dotnet run Program.cs`). Needs .NET SDK **10.0.300+** (uses the `#:include` directive) or .NET 11.
 Open the site at the URL shown in the console (e.g. `http://localhost:5000`) and the admin console at **`/admin`**.
 
-The admin console lives in its own files under `admin/Admin/` and shares the same live data as the guest site
-(bookings made on the guest site appear in the admin console immediately).
+## Structure
+
+- `Program.cs` — the whole guest website (landing page with room carousel, booking with
+  confirmation prompts and per-method payment flows, my bookings, cancellation, support)
+- `Admin/` — the admin console modules (wired into the same app by the `AdminConsole.Map` hook
+  in `Program.cs`); bookings made on the guest site appear in the admin console immediately
+- `assets/` — all site pictures (room photos, hero, logo, icon); served through `/photo/...`
 
 ## Admin console
 
@@ -33,14 +31,13 @@ The admin console lives in its own files under `admin/Admin/` and shares the sam
 ## Data
 
 Everything (rooms, bookings, transactions, folios, staff accounts, offers, rates, settings, audit logs)
-auto-saves to `admin/azure-cove-data.json` and reloads on the next start. Delete the file to reset to factory state.
-Photos are served from the `assets/` folder in the repo root (also `wwwroot`, the `admin`
-folder or the repo root still work, same as the original site).
+auto-saves to `azure-cove-data.json` in the repo root and reloads on the next start. Delete the file to reset to factory state.
+Pictures are served from the `assets/` folder (also `wwwroot` or the repo root still work).
 The browser-tab icon (`azure-icon.jpeg`) comes from the assets folder.
 
 ## Notes
 
 - E-mail sending is **demo mode**: templates render into an outbox; hooking up SMTP is a future step.
 - Duplicate payment detection flags same-booking payments within 10 minutes and same guest/amount/method per day - review them in **Payments**.
-- If you run both the original `Program.cs` and the copy at the same time, give one a different port:
-  `ASPNETCORE_URLS=http://localhost:5050 dotnet run Program.cs`
+- If the port is taken, run on another one:
+  `ASPNETCORE_URLS=http://localhost:5050 dotnet run --file Program.cs`
