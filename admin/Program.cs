@@ -20,10 +20,10 @@ app.UseStaticFiles();
 
 var rooms = new List<Room>
 {
-    new Room { Id = 1, Name = "Standard Room", Details = "Enjoy a comforting and convenience stay in our Standard Room, thoughtfully prepared and designed for a pleasant and relaxing stay. Featuring a comfortable bed, a private bathroom, and essential facilities, it is an excellent choice for solo vacations, couple getaway, and business trips. ",        Price = 1500, MaxGuests = 2, Image = "standard.png", IsAvailable = true, Units = 3, RoomStatus = "Clean" },
-    new Room { Id = 2, Name = "Deluxe Room",   Details = "Treat yourself to a pleasant hotel experience in our Deluxe Bay View. With its spacious interior, premium bedding, and breathtaking views inside your room, this room combines relaxation and elegance for guests seeking extra comfort during their stay at our hotel. ",          Price = 2500, MaxGuests = 2, Image = "deluxe.png", IsAvailable = true, Units = 2, RoomStatus = "Clean" },
-    new Room { Id = 3, Name = "Family Room",   Details = "Make a ever lasting memories with your loved ones in our Family Suite. Featuring a comfortable set of beds, a vast layout, and a cozy living area, this room provides plenty of space for families to enjoy their well deserved bond together. Perfect for family vacations and even group hang outs. ",       Price = 3500, MaxGuests = 4, Image = "family.png", IsAvailable = true, Units = 2, RoomStatus = "Clean" },
-    new Room { Id = 4, Name = "Suite",         Details = "Experience our best suite. The Presidential Suite, featuring a well-furnitured living area, a spacious bedroom, a well lit private bathroom. Designed for guests who appreciates exclusivity, service and comfort, our Presidential Suite offers a truly unforgettable stay.",  Price = 5000, MaxGuests = 6, Image = "suite.png", IsAvailable = true, Units = 1, RoomStatus = "Clean" }
+    new Room { Id = 1, Name = "Standard Room", Details = "Enjoy a comforting and convenience stay in our Standard Room, thoughtfully prepared and designed for a pleasant and relaxing stay. Featuring a comfortable bed, a private bathroom, and essential facilities, it is an excellent choice for solo vacations, couple getaway, and business trips. ",        Price = 1500, MaxGuests = 2, Image = "standard-azure.jpeg", IsAvailable = true, Units = 3, RoomStatus = "Clean" },
+    new Room { Id = 2, Name = "Deluxe Room",   Details = "Treat yourself to a pleasant hotel experience in our Deluxe Bay View. With its spacious interior, premium bedding, and breathtaking views inside your room, this room combines relaxation and elegance for guests seeking extra comfort during their stay at our hotel. ",          Price = 2500, MaxGuests = 2, Image = "deluxe-azure.jpeg", IsAvailable = true, Units = 2, RoomStatus = "Clean" },
+    new Room { Id = 3, Name = "Family Room",   Details = "Make a ever lasting memories with your loved ones in our Family Suite. Featuring a comfortable set of beds, a vast layout, and a cozy living area, this room provides plenty of space for families to enjoy their well deserved bond together. Perfect for family vacations and even group hang outs. ",       Price = 3500, MaxGuests = 4, Image = "family-azure.jpeg", IsAvailable = true, Units = 2, RoomStatus = "Clean" },
+    new Room { Id = 4, Name = "Suite",         Details = "Experience our best suite. The Presidential Suite, featuring a well-furnitured living area, a spacious bedroom, a well lit private bathroom. Designed for guests who appreciates exclusivity, service and comfort, our Presidential Suite offers a truly unforgettable stay.",  Price = 5000, MaxGuests = 6, Image = "suite-azure.jpeg", IsAvailable = true, Units = 1, RoomStatus = "Clean" }
 };
 
 var paymentMethods = new List<string> { "Credit Card", "GCash", "PayPal", "Cash at hotel" };
@@ -48,7 +48,7 @@ button,input,select,textarea{font-family:inherit}
 .nav a{color:#fff;margin:0 14px;font-family:'IBM Plex Sans Devanagari',sans-serif;font-size:24px;font-weight:600}
 .logo{color:#fff;font-family:'Fleur De Leah',cursive;font-size:60px;font-weight:400;line-height:1}
 .nav a{color:#fff;margin:0 18px;font-weight:600}
-.hero{background:linear-gradient(rgba(0,20,60,0.55),rgba(0,20,60,0.55)),url('/photo/background  .png') center/cover;color:#fff;padding:45px 0 70px;text-align:center}
+.hero{background:linear-gradient(rgba(0,20,60,0.55),rgba(0,20,60,0.55)),url('/photo/azure-hero.jpeg') center/cover;color:#fff;padding:45px 0 70px;text-align:center}
 .hero h1{font-size:42px;margin:0 0 8px} 
 .wrap{max-width:1100px;margin:auto;padding:0 20px}
 .wrap h2{text-align:center}
@@ -721,7 +721,9 @@ app.MapGet("/photo/{name}", (string name) =>
     string[] folders =
     {
         Path.Combine(root, "wwwroot"),
+        Path.Combine(root, "assets"),                          // assets folder next to the copy's Program.cs
         root,
+        Path.GetFullPath(Path.Combine(root, "..", "assets")),  // assets folder in the repo root
         Path.GetFullPath(Path.Combine(root, "..")), // repo root, photos next to the original Program.cs
         AppContext.BaseDirectory
     };

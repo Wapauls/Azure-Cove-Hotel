@@ -344,6 +344,15 @@ public static class AdminData
         {
             if (r.Units < 1) r.Units = 1;
             if (r.RoomStatus == "") r.RoomStatus = "Clean";
+            // photo migration: the generated placeholders were replaced by the
+            // real photography (standard-azure.jpeg etc.) - keep old saves working
+            switch (r.Image)
+            {
+                case "standard.png": r.Image = "standard-azure.jpeg"; break;
+                case "deluxe.png": r.Image = "deluxe-azure.jpeg"; break;
+                case "family.png": r.Image = "family-azure.jpeg"; break;
+                case "suite.png": r.Image = "suite-azure.jpeg"; break;
+            }
         }
         if (Admins.Count == 0) SeedAdmin();
         if (Templates.Count == 0)

@@ -34,8 +34,9 @@ The admin console lives in its own files under `admin/Admin/` and shares the sam
 
 Everything (rooms, bookings, transactions, folios, staff accounts, offers, rates, settings, audit logs)
 auto-saves to `admin/azure-cove-data.json` and reloads on the next start. Delete the file to reset to factory state.
-Photos are served from the repo root or `wwwroot` (same as the original site).
-The browser-tab icon (`azure-icon.jpeg`) comes from the repo root.
+Photos are served from the `assets/` folder in the repo root (also `wwwroot`, the `admin`
+folder or the repo root still work, same as the original site).
+The browser-tab icon (`azure-icon.jpeg`) comes from the assets folder.
 
 ## Notes
 
