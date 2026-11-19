@@ -75,7 +75,6 @@ public static class AdminAuth
         return p.Expires < DateTime.Now ? null : p;
     }
 
-    // ---------- passwords ----------
 
     public static string HashPassword(string password)
     {
@@ -98,7 +97,6 @@ public static class AdminAuth
         return CryptographicOperations.FixedTimeEquals(test, hash);
     }
 
-    // ---------- sessions ----------
 
     public static AdminUser? UserOf(HttpContext? ctx)
     {
@@ -123,7 +121,6 @@ public static class AdminAuth
         return (u, null);
     }
 
-    // ---------- routes ----------
 
     public static void Map(WebApplication app)
     {
@@ -203,7 +200,6 @@ public static class AdminAuth
             return Results.Redirect("/admin/login");
         });
 
-        // ---------- my account (available to every signed-in staff member) ----------
 
         app.MapGet("/admin/account", (HttpContext ctx) =>
         {
@@ -321,7 +317,6 @@ public static class AdminAuth
         return sb.ToString();
     }
 
-    // ---------- my account page ----------
 
     private static string AccountBody(AdminUser u, string saved, string error)
     {
@@ -353,7 +348,6 @@ public static class AdminAuth
         return sb.ToString();
     }
 
-    // ---------- review-before-confirm pages ----------
 
     private static string ConfirmUsernameBody(string oldName, string newName)
     {

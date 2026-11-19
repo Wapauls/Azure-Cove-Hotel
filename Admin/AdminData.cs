@@ -223,7 +223,6 @@ public static class AdminData
         Load();
     }
 
-    // ---------- persistence ----------
 
     public static void Load()
     {
@@ -361,7 +360,6 @@ public static class AdminData
         }
     }
 
-    // ---------- small helpers ----------
 
     public static int NextId<T>(List<T> list, Func<T, int> key) => list.Count == 0 ? 1 : list.Max(key) + 1;
 
@@ -387,7 +385,6 @@ public static class AdminData
         return Chip(status, color);
     }
 
-    // ---------- audit ----------
 
     public static void Audit(HttpContext? ctx, string action, string details)
     {
@@ -405,7 +402,6 @@ public static class AdminData
         Save();
     }
 
-    // ---------- gateways ----------
 
     public static bool IsGatewayOnline(string method) => Gateways.TryGetValue(method, out bool ok) && ok;
 
@@ -416,7 +412,6 @@ public static class AdminData
         return list;
     }
 
-    // ---------- pricing engine ----------
 
     public static int RateFor(Room room, DateTime night)
     {
@@ -482,7 +477,6 @@ public static class AdminData
         return q;
     }
 
-    // ---------- date-based availability ----------
 
     public static bool StatusBlocks(string status) => status == "Cancelled" || status == "Refunded";
 
@@ -525,7 +519,6 @@ public static class AdminData
         return "Available";
     }
 
-    // ---------- folios ----------
 
     public static Folio? FolioFor(int bookingId) => Folios.Find(f => f.BookingId == bookingId);
 
@@ -559,7 +552,6 @@ public static class AdminData
         return owed;
     }
 
-    // ---------- cancellation policy ----------
 
     public static (int amount, bool full) RefundableFor(Booking b)
     {
@@ -568,7 +560,6 @@ public static class AdminData
         return (Math.Max(0, b.Total - fee), false);
     }
 
-    // ---------- e-mails (demo outbox, no SMTP) ----------
 
     public static string Fill(string text, Booking b)
     {
@@ -604,7 +595,6 @@ public static class AdminData
         Save();
     }
 
-    // ---------- duplicate payment detection ----------
 
     public static List<Transaction> FlaggedDuplicates()
     {

@@ -70,7 +70,6 @@ public static class AdminConsole
         });
     }
 
-    // ---------- page shell ----------
 
     public static IResult Page(AdminUser user, string section, string title, string body)
     {
@@ -121,7 +120,6 @@ public static class AdminConsole
             + "<title>" + AdminData.H(title) + " - Admin - Azure Cove Hotel</title><style>" + AdminCss + "</style></head><body" + (dark ? " class='dark'" : "") + ">" + inner + "</body></html>";
     }
 
-    // ---------- audit log page ----------
 
     private static void MapAudit(WebApplication app)
     {
@@ -162,7 +160,6 @@ public static class AdminConsole
         });
     }
 
-    // ---------- admin stylesheet ----------
 
     public static string AdminCss = """
 *{box-sizing:border-box}

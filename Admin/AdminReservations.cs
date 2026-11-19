@@ -17,7 +17,6 @@ public static class AdminReservations
         MapReceipt(app);
     }
 
-    // ---------- list ----------
 
     private static void MapList(WebApplication app)
     {
@@ -74,7 +73,6 @@ public static class AdminReservations
         });
     }
 
-    // ---------- staff-created booking (walk-in / OTA) ----------
 
     private static void MapNew(WebApplication app)
     {
@@ -147,7 +145,6 @@ public static class AdminReservations
         });
     }
 
-    // ---------- detail ----------
 
     private static void MapDetail(WebApplication app)
     {
@@ -207,7 +204,6 @@ public static class AdminReservations
         });
     }
 
-    // ---------- status actions ----------
 
     private static void MapActions(WebApplication app)
     {
@@ -297,7 +293,6 @@ public static class AdminReservations
         });
     }
 
-    // ---------- digital receipt ----------
 
     private static void MapReceipt(WebApplication app)
     {
